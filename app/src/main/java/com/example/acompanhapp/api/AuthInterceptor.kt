@@ -12,7 +12,7 @@ class AuthInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val requestWithAuth = chain.request()
             .newBuilder()
-            .addHeader("Authorization", "Bearer eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJhY29tcGFuaGFwcCIsInN1YiI6ImFkbWluQGVtYWlsLmNvbSIsImV4cCI6MTc1Mjg4MDUyNSwiaWF0IjoxNzUyODc2OTI1LCJzY29wZSI6IlJPTEVfQURNSU4ifQ.vKap1hKAJQyJQuLyNLwIu8HC2wZSoY6miuJkF8_VGdUlokaCfpbGDaqmq2e09vCuQqOdrKiSxpTAm8tGlbQ7vMG5ClnqF5-b7KyZvCFm-GR4U1WtfkCxaZhuDDnAbzfnlsej7TMd_9WrkLFnxwZEZr1tr0IpoG8LsJmuNQxlk4T_Rf57ttR24v7hQui63F4sP3BB5BEDhl_k7lpMtvNZGrJA7XcMLkv7g9NFy_DnRv9QIBo59mz0K567bsJITZvMpc_1rsfpJ9ZNwb7DpBVh-_OVEn-z_gKJ-C6qgDEUQ9rgk4QDfGfMYjpBiLu3FybiE1szhvZaZPUF9vTIDO_xhg")
+            .addHeader("Authorization", "Bearer eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJhY29tcGFuaGFwcCIsInN1YiI6ImFkbWluQGVtYWlsLmNvbSIsImV4cCI6MTc1Mjg4NDI0MSwiaWF0IjoxNzUyODgwNjQxLCJzY29wZSI6IlJPTEVfQURNSU4ifQ.NJASktnj4VIEnzXsVVByed888-QFTrFOsmMoVJnw_UmIw4mIlDFJpYmG8hFpfznPn920fBGVVZUo8LxME48KrW_TO9pQUOmiIKY_e94-zJ4JIUqO2BsBaV8h_ajzFjOog0_14Ss53-4CrRERQS-gpnVPsDOQH04kdh5bmJHIQJ9tT7RgVIDvKzLtSb_Kxw7SGdKNqViorcGwUuuTXYyhdPMeYN5gV9E1osEn7TSbCE9WaZkNw4gzoLu0ibjaCcXJ-3X6GkBQbZjYJdSQluFnb6PnTCK0h-ccoaqcQ1kF2HcAOuvB-RoqrFvpdq2xpuvu6tMx5rxXCmW7wEt6lAHVRw")
             .build()
         return chain.proceed(requestWithAuth)
     }

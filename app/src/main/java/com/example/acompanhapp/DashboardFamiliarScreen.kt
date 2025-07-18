@@ -68,11 +68,3 @@ fun ActionButton(label: String, modifier: Modifier = Modifier) {
         Text(label)
     }
 }
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun DashboardPreview() {
-    AcompanhAppTheme {
-        DashboardFamiliarScreen(navController = rememberNavController())
-    }
-}
