@@ -6,13 +6,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,17 +21,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.acompanhapp.api.RetrofitClient
+import com.example.acompanhapp.config.UserPreferences
 import com.example.acompanhapp.model.UserResponse
-import com.example.acompanhapp.ui.theme.AcompanhAppTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -41,6 +35,8 @@ fun LoginScreen(navController: NavController) {
     var senha by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val userPrefs = remember { UserPreferences(context) }
 
     Column(
         modifier = Modifier
@@ -148,6 +144,14 @@ fun LoginScreen(navController: NavController) {
                                     it.email == email && it.password == senha
                                 }
                                 if (usuarioEncontrado != null) {
+                                    // Salva usuário na DataStore
+                                    coroutineScope.launch {
+                                        userPrefs.saveUser(
+                                            email = usuarioEncontrado.email,
+                                            name = usuarioEncontrado.nome,
+                                            id = usuarioEncontrado.id
+                                        )
+                                    }
                                     navController.navigate("home")
                                 } else {
                                     Toast.makeText(context, "Email ou senha incorretos", Toast.LENGTH_SHORT).show()

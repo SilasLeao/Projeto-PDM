@@ -1,6 +1,7 @@
 package com.example.acompanhapp.api
 
 import com.example.acompanhapp.model.EquipeMedicaResponse
+import com.example.acompanhapp.model.PacienteResponse
 import com.example.acompanhapp.model.UserResponse
 import retrofit2.http.GET
 import retrofit2.Call
@@ -10,4 +11,7 @@ interface UserApi {
 
     @GET("equipemedica")
     fun getEquipeMedica(): Call<EquipeMedicaResponse>
+
+    @GET("paciente")
+    fun getPacientes(): Call<PacienteResponse>
 }
