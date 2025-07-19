@@ -5,11 +5,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.example.acompanhapp.ui.theme.AcompanhAppTheme
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
@@ -26,9 +23,9 @@ import retrofit2.Response
 import retrofit2.Callback
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import com.example.acompanhapp.model.Paciente
 
+// Tela principal do dashboard para usuários familiares, mostrando os pacientes ligados ao usuário.
 @Composable
 fun DashboardFamiliarScreen(navController: NavController) {
     val context = LocalContext.current
@@ -39,16 +36,20 @@ fun DashboardFamiliarScreen(navController: NavController) {
     var idUsuario by remember { mutableStateOf<String?>(null) }
     var pacientesFiltrados by remember { mutableStateOf<List<Paciente>>(emptyList()) }
 
-    // Recuperar informações do Usuário e Paciente
+    // Efeito executado ao iniciar a composição para carregar dados da API
     LaunchedEffect(Unit) {
         nomeUsuario = userPreferences.getName()
         idUsuario = userPreferences.getId()
 
+        // Caso o id do usuário familiar não seja nulo, executa a busca dos pacientes
         idUsuario?.let { id ->
             RetrofitClient.getClient().getPacientes().enqueue(object : Callback<PacienteResponse> {
+                // Callback executado quando a resposta da API é recebida
                 override fun onResponse(call: Call<PacienteResponse>, response: Response<PacienteResponse>) {
                     if (response.isSuccessful) {
+                        // Obtém a lista completa de pacientes da resposta ou uma lista vazia caso não tenha dados
                         val todosPacientes = response.body()?.data ?: emptyList()
+                        // Filtra pacientes que contenham o id do familiar na lista de familiaresId
                         val filtrados = todosPacientes.filter { it.familiaresId?.contains(id) == true }
                         pacientesFiltrados = filtrados
 
@@ -77,6 +78,7 @@ fun DashboardFamiliarScreen(navController: NavController) {
 
         Divider(modifier = Modifier.padding(vertical = 12.dp))
 
+        // Renderiza um bloco para cada paciente filtrado
         pacientesFiltrados.forEach { paciente ->
 
             Column(
@@ -152,6 +154,7 @@ fun DashboardFamiliarScreen(navController: NavController) {
 
 }
 
+// Composable que exibe um card para Condição, Batimentos e Pressão.
 @Composable
 fun CardInfo(title: String, value: String = "", modifier: Modifier = Modifier) {
     Card(
@@ -166,6 +169,7 @@ fun CardInfo(title: String, value: String = "", modifier: Modifier = Modifier) {
 }
 
 
+// Botão usado na tela do dashboard para Exames, Visitas e Medicamentos.
 @Composable
 fun ActionButton(label: String, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     Button(

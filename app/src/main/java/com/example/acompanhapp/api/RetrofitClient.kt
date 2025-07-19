@@ -4,12 +4,13 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
+// Cliente Retrofit para realizar chamadas HTTP à API, incluindo o interceptor de autenticação
 object RetrofitClient {
     private const val BASE_URL = "http://52.15.153.93:8080/"
 
     fun getClient(): UserApi {
         val okHttpClient = OkHttpClient.Builder()
-            .addInterceptor(AuthInterceptor())
+            .addInterceptor(AuthInterceptor()) // Adiciona interceptor para autenticação
             .build()
 
         return Retrofit.Builder()
@@ -17,6 +18,6 @@ object RetrofitClient {
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(UserApi::class.java)
+            .create(UserApi::class.java) // Cria implementação da interface UserApi que possui os endpoints
     }
 }

@@ -27,25 +27,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 
+// Composable que exibe a tela da equipe médica, fazendo uma requisição para buscar a lista de médicos cadastrados
 @Composable
 fun EquipeMedicaScreen(navController: NavController) {
+    // Estado para armazenar a lista de médicos retornada pela API
     var medicos by remember { mutableStateOf<List<Medico>>(emptyList()) }
+    // Estado para controlar se os dados estão sendo carregados
     var isLoading by remember { mutableStateOf(true) }
+    // Contexto para exibir Toasts
     val context = LocalContext.current
+    // Estado para rolagem vertical da tela
+    val scrollState = rememberScrollState()
 
-    val scrollState = rememberScrollState() // Scroll state
-
+    // Efeito executado ao iniciar a composição para carregar dados da API
     LaunchedEffect(Unit) {
         RetrofitClient.getClient().getEquipeMedica().enqueue(object : Callback<EquipeMedicaResponse> {
+            // Callback executado quando a resposta da API é recebida
             override fun onResponse(call: Call<EquipeMedicaResponse>, response: Response<EquipeMedicaResponse>) {
                 isLoading = false
                 if (response.isSuccessful) {
+                    // Atualiza a lista de médicos com os dados da resposta
                     medicos = response.body()?.data ?: emptyList()
                 } else {
+                    // Mostra mensagem de erro em caso de falha na resposta
                     Toast.makeText(context, "Erro na resposta: ${response.code()}", Toast.LENGTH_LONG).show()
                 }
             }
 
+            // Callback executado caso a requisição falhe
             override fun onFailure(call: Call<EquipeMedicaResponse>, t: Throwable) {
                 isLoading = false
                 Toast.makeText(context, "Erro na conexão: ${t.message}", Toast.LENGTH_LONG).show()
@@ -53,7 +62,6 @@ fun EquipeMedicaScreen(navController: NavController) {
         })
     }
 
-    // Aplica scroll no conteúdo
     Column(
         modifier = Modifier
             .padding(16.dp)
@@ -64,12 +72,14 @@ fun EquipeMedicaScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Se estiver carregando, mostra indicador de progresso circular
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
             if (medicos.isEmpty()) {
                 Text("Nenhum médico cadastrado.", modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
+                // Para cada médico, cria um Card com as informações dele
                 medicos.forEach { medico ->
                     Card(
                         modifier = Modifier

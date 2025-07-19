@@ -28,12 +28,14 @@ import com.example.acompanhapp.config.UserPreferences
 import com.example.acompanhapp.model.UserResponse
 import kotlinx.coroutines.launch
 
+// Composable que representa a tela de login do aplicativo.
 @Composable
 fun LoginScreen(navController: NavController) {
-    // Estados para email e senha
+    // Estados para armazenar email, senha e status de carregamento
     var email by remember { mutableStateOf("") }
     var senha by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val userPrefs = remember { UserPreferences(context) }
@@ -128,10 +130,11 @@ fun LoginScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Botão para tentar efetuar login
             Button(
                 onClick = {
                     isLoading = true
-
+                    // Realiza requisição para obter lista de usuários e validar credenciais
                     RetrofitClient.getClient().getUsers().enqueue(object : retrofit2.Callback<UserResponse> {
                         override fun onResponse(
                             call: retrofit2.Call<UserResponse>,
@@ -140,11 +143,12 @@ fun LoginScreen(navController: NavController) {
                             isLoading = false
                             if (response.isSuccessful) {
                                 val usuarios = response.body()?.data ?: emptyList()
+                                // Procura usuário com as credenciais usadas no login
                                 val usuarioEncontrado = usuarios.find {
                                     it.email == email && it.password == senha
                                 }
                                 if (usuarioEncontrado != null) {
-                                    // Salva usuário na DataStore
+                                    // Salva dados do usuário na DataStore
                                     coroutineScope.launch {
                                         userPrefs.saveUser(
                                             email = usuarioEncontrado.email,
@@ -152,6 +156,7 @@ fun LoginScreen(navController: NavController) {
                                             id = usuarioEncontrado.id
                                         )
                                     }
+                                    // Navega para a tela principal após login bem sucedido
                                     navController.navigate("home")
                                 } else {
                                     Toast.makeText(context, "Email ou senha incorretos", Toast.LENGTH_SHORT).show()
