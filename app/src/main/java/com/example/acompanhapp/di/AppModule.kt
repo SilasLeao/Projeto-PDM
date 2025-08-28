@@ -34,6 +34,6 @@ val appModule = module {
     // ViewModels
     viewModel { LoginViewModel(get(), get(), get()) }
     viewModel { EquipeMedicaViewModel(get()) }
-    viewModel { DashboardViewModel(get(), get()) }
+    viewModel { DashboardViewModel(get(), get(), get()) }
     viewModel { HomeViewModel() }
 }

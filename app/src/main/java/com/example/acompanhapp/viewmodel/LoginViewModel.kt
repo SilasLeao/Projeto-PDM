@@ -58,12 +58,6 @@ class LoginViewModel(
                             )
                             userDao.insertUser(userEntity)
 
-                            // Salvar no UserPreferences
-                            userPrefs.saveUser(
-                                usuarioEncontrado.email,
-                                usuarioEncontrado.nome,
-                                usuarioEncontrado.id
-                            )
                             onSuccess()
                         }
                     } else {
@@ -79,4 +73,5 @@ class LoginViewModel(
             }
         })
     }
+
 }

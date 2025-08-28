@@ -19,6 +19,9 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE email = :email LIMIT 1")
     suspend fun getUserByEmail(email: String): UserEntity?
 
+    @Query("SELECT * FROM users LIMIT 1")
+    suspend fun getLoggedUser(): UserEntity?
+
     @Query("DELETE FROM users")
     suspend fun deleteAllUsers()
 }

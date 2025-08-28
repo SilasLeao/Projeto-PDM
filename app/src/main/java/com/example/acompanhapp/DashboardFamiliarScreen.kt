@@ -27,9 +27,13 @@ fun DashboardFamiliarScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
+    var showVisitaDialog by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(uiState.pacientes) {
         viewModel.loadPacientes()
+        uiState.pacientes.forEach { paciente ->
+            paciente.id?.let { viewModel.carregarVisitas(it) }
+        }
     }
 
     Column(
@@ -38,7 +42,7 @@ fun DashboardFamiliarScreen(
             .verticalScroll(scrollState)
     ) {
         Text(
-            text = "Olá ${uiState.nomeUsuario ?: "Familiar"}",
+            text = "Olá ${uiState.nomeUsuario ?: "Pessoa"}",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(top = 16.dp)
         )
@@ -93,16 +97,81 @@ fun DashboardFamiliarScreen(
                         )
                     }
 
+                    ListaVisitas(pacienteId = paciente.id ?: "", viewModel = viewModel)
+
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         ActionButton("Exames", Modifier.weight(1f))
-                        ActionButton("Visitas", Modifier.weight(1f))
+                        ActionButton("Visitas", Modifier.weight(1f)) {
+                            showVisitaDialog = true to paciente.id
+                            // Carregar visitas atuais ao abrir o dialog
+                            viewModel.carregarVisitas(paciente.id)
+                        }
                         ActionButton("Medicamentos", Modifier.weight(1f))
                     }
+
+                    showVisitaDialog?.let { (show, pacienteId) ->
+                        if (show) {
+                            val context = LocalContext.current
+                            var dataHora by remember { mutableStateOf("") }
+
+                            // Estados para armazenar data e hora
+                            val calendar = remember { java.util.Calendar.getInstance() }
+
+                            AlertDialog(
+                                onDismissRequest = { showVisitaDialog = null },
+                                title = { Text("Agendar Visita") },
+                                text = {
+                                    Column {
+                                        TextButton(onClick = {
+                                            // Abrir DatePicker
+                                            android.app.DatePickerDialog(
+                                                context,
+                                                { _, year, month, dayOfMonth ->
+                                                    calendar.set(year, month, dayOfMonth)
+                                                    // Após escolher data, abrir TimePicker
+                                                    android.app.TimePickerDialog(
+                                                        context,
+                                                        { _, hourOfDay, minute ->
+                                                            calendar.set(java.util.Calendar.HOUR_OF_DAY, hourOfDay)
+                                                            calendar.set(java.util.Calendar.MINUTE, minute)
+                                                            // Formatar para ISO ou desejado
+                                                            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm", java.util.Locale.getDefault())
+                                                            dataHora = sdf.format(calendar.time)
+                                                        },
+                                                        calendar.get(java.util.Calendar.HOUR_OF_DAY),
+                                                        calendar.get(java.util.Calendar.MINUTE),
+                                                        true
+                                                    ).show()
+                                                },
+                                                calendar.get(java.util.Calendar.YEAR),
+                                                calendar.get(java.util.Calendar.MONTH),
+                                                calendar.get(java.util.Calendar.DAY_OF_MONTH)
+                                            ).show()
+                                        }) {
+                                            Text(if (dataHora.isEmpty()) "Escolher Data e Hora" else dataHora)
+                                        }
+                                    }
+                                },
+                                confirmButton = {
+                                    Button(onClick = {
+                                        viewModel.agendarVisita(pacienteId, dataHora)
+                                        viewModel.carregarVisitas(pacienteId) // atualizar lista
+                                        showVisitaDialog = null
+                                    }) {
+                                        Text("Agendar")
+                                    }
+                                },
+                                dismissButton = {
+                                    Button(onClick = { showVisitaDialog = null }) {
+                                        Text("Cancelar")
+                                    }
+                                }
+                            )
+                        }
+                    }
+
 
                     Spacer(modifier = Modifier.height(16.dp))
 
