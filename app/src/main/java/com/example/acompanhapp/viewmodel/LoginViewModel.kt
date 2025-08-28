@@ -1,11 +1,12 @@
 package com.example.acompanhapp.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.acompanhapp.api.UserApi
 import com.example.acompanhapp.config.UserPreferences
+import com.example.acompanhapp.dao.UserDao
 import com.example.acompanhapp.model.UserResponse
+import com.example.acompanhapp.model.entity.UserEntity
 import com.example.acompanhapp.viewmodel.state.LoginUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +18,8 @@ import retrofit2.Response
 
 class LoginViewModel(
     private val api: UserApi,
-    private val userPrefs: UserPreferences
+    private val userPrefs: UserPreferences,
+    private val userDao: UserDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -46,7 +48,22 @@ class LoginViewModel(
 
                     if (usuarioEncontrado != null && BCrypt.checkpw(senha, usuarioEncontrado.password)) {
                         viewModelScope.launch {
-                            userPrefs.saveUser(usuarioEncontrado.email, usuarioEncontrado.nome, usuarioEncontrado.id)
+                            // Salvar no Room
+                            val userEntity = UserEntity(
+                                id = usuarioEncontrado.id ?: "",
+                                email = usuarioEncontrado.email ?: "",
+                                nome = usuarioEncontrado.nome ?: "",
+                                username = usuarioEncontrado.username ?: "",
+                                password = usuarioEncontrado.password ?: ""
+                            )
+                            userDao.insertUser(userEntity)
+
+                            // Salvar no UserPreferences
+                            userPrefs.saveUser(
+                                usuarioEncontrado.email,
+                                usuarioEncontrado.nome,
+                                usuarioEncontrado.id
+                            )
                             onSuccess()
                         }
                     } else {

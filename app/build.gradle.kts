@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    kotlin("kapt")
 }
 
 android {
@@ -69,4 +70,7 @@ dependencies {
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("io.insert-koin:koin-android:3.4.3")
     implementation("io.insert-koin:koin-androidx-compose:3.4.3")
+    implementation("androidx.room:room-runtime:2.6.0")
+    kapt("androidx.room:room-compiler:2.6.0")
+    implementation("androidx.room:room-ktx:2.6.0")
 }
