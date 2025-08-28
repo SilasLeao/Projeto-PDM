@@ -10,7 +10,7 @@ class AuthInterceptor : Interceptor {
         val requestWithAuth = chain.request()
             .newBuilder()
             // Necessário trocar a palavra "token" pelo token de autorização
-            .addHeader("Authorization", "Bearer eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJhY29tcGFuaGFwcCIsInN1YiI6ImFkbWluQGVtYWlsLmNvbSIsImV4cCI6MTc1NjQxODc0MSwiaWF0IjoxNzU2NDE1MTQxLCJzY29wZSI6IlJPTEVfQURNSU4ifQ.k2w0F_1TbDfTLUvoJbtXh5hzcvB8QGzU3v4f8uXt8J8ygP7sYXRMg7vGtxPTfcq0BBP8HcWhMFIe9N-Xf70mclLS3d5EP8VdP0ojjUugZFqhTvGjOnbh31PYRsGjqy4kbOpUVlm2C2zsXU3EsWq72cyukIA8WiA2A3OnqQ0J3JWksOBNMziq5jqBN34IJJmoh6MkwcqREwAaUY8XIbSeZLN922aHL7Ur1R7vgfotPVay50tmwD1Pb7g8r8u9nWGukr-rd74b1cy8jXAoLXR-JCUXERFWorJBXum1wQvldk40mK9TiO-vu5yYWnx28uszBH-Yg0TUZO8qrKZHTznPUQ")
+            .addHeader("Authorization", "Bearer eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJhY29tcGFuaGFwcCIsInN1YiI6ImFkbWluQGVtYWlsLmNvbSIsImV4cCI6MTc1NjQyMjUwMiwiaWF0IjoxNzU2NDE4OTAyLCJzY29wZSI6IlJPTEVfQURNSU4ifQ.C3kSlPHAcYzXXqYmHiQ6P0hPduZ9WEO0DKZjYOsr_L-7WspYnS06KVvHzyALpjgJJCm4fm3E3DXc-vCVJVeWS9exWzYdWkKBvTVHltKMpxGk7dls4V0Pr2b_pRTb_kafBdBycDaJuDhtPQWp4NxnIfPV0rvp0a5I43e2OEM7iXCfChHiWh6Stv4s9BsUjxWnU8doTgpWtGq3Kxxs0Y2nBN3nbfuuefZxy82v2uwUmmat_5zYGGlPm-X3bNiYBAJOA49_Hh2HIk7SfXCedNT6QDP0upsUPtSM-iYiB5Pol60VvaH0CljXUOWxNMmXa0_59ioC4pLra_qZRJhATjF5yw")
             .build()
         return chain.proceed(requestWithAuth)
     }

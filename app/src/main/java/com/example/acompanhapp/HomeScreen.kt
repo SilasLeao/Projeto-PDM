@@ -1,4 +1,4 @@
-package com.example.acompanhapp
+package com.example.acompanhapp.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -6,17 +6,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.acompanhapp.R
+import com.example.acompanhapp.viewmodel.HomeViewModel
+import org.koin.androidx.compose.koinViewModel
 
-// Composable que representa a tela Home do aplicativo, com botões de navegação para as telas de Equipe Médica e Familiares(Dashboard)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, viewModel: HomeViewModel = koinViewModel()) {
+    val uiState by viewModel.uiState.collectAsState()
+
     Column(modifier = Modifier.padding(0.dp)) {
         Image(
             painter = painterResource(id = R.drawable.doctor_image),
@@ -37,8 +41,8 @@ fun HomeScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = uiState.searchQuery,
+            onValueChange = { viewModel.onSearchQueryChange(it) },
             placeholder = { Text("Buscar...") },
             trailingIcon = {
                 Icon(Icons.Default.Search, contentDescription = "Buscar")
@@ -50,7 +54,10 @@ fun HomeScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Text("Cadastre ou gerencie equipes médicas, pacientes e familiares.", modifier = Modifier.padding(start = 16.dp, end = 16.dp))
+        Text(
+            "Cadastre ou gerencie equipes médicas, pacientes e familiares.",
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp)
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -61,13 +68,10 @@ fun HomeScreen(navController: NavController) {
             horizontalArrangement = Arrangement.Center,
         ) {
             Button(
-
                 onClick = { navController.navigate("equipe") },
-                modifier = Modifier
-                    .size(140.dp),
+                modifier = Modifier.size(140.dp),
                 shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF369A74)
-            )
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF369A74))
             ) {
                 Text("Equipe Médica")
             }
@@ -75,17 +79,13 @@ fun HomeScreen(navController: NavController) {
             Spacer(modifier = Modifier.width(16.dp))
 
             Button(
-
                 onClick = { navController.navigate("dashboard") },
-                modifier = Modifier
-                    .size(140.dp),
+                modifier = Modifier.size(140.dp),
                 shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF369A74)
-                )
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF369A74))
             ) {
                 Text("Familiares")
             }
         }
-
     }
 }

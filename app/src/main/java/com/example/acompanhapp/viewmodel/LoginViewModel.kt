@@ -1,10 +1,9 @@
 package com.example.acompanhapp.viewmodel
 
-import android.content.Context
-import android.widget.Toast
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.acompanhapp.api.RetrofitClient
+import com.example.acompanhapp.api.UserApi
 import com.example.acompanhapp.config.UserPreferences
 import com.example.acompanhapp.model.UserResponse
 import com.example.acompanhapp.viewmodel.state.LoginUiState
@@ -16,12 +15,13 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class LoginViewModel(private val context: Context) : ViewModel() {
+class LoginViewModel(
+    private val api: UserApi,
+    private val userPrefs: UserPreferences
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState
-
-    private val userPrefs = UserPreferences(context)
 
     fun onEmailChange(email: String) {
         _uiState.value = _uiState.value.copy(email = email)
@@ -31,25 +31,26 @@ class LoginViewModel(private val context: Context) : ViewModel() {
         _uiState.value = _uiState.value.copy(senha = senha)
     }
 
-    fun login() {
+    fun login(onSuccess: () -> Unit) {
         val email = _uiState.value.email
         val senha = _uiState.value.senha
 
-        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        _uiState.value = _uiState.value.copy(isLoading = true)
 
-        RetrofitClient.getClient().getUsers().enqueue(object : Callback<UserResponse> {
+        api.getUsers().enqueue(object : Callback<UserResponse> {
             override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
                 _uiState.value = _uiState.value.copy(isLoading = false)
                 if (response.isSuccessful) {
-                    val usuario = response.body()?.data?.find { it.email == email }
-                    if (usuario != null && BCrypt.checkpw(senha, usuario.password)) {
-                        // Login correto
+                    val usuarios = response.body()?.data ?: emptyList()
+                    val usuarioEncontrado = usuarios.find { it.email == email }
+
+                    if (usuarioEncontrado != null && BCrypt.checkpw(senha, usuarioEncontrado.password)) {
                         viewModelScope.launch {
-                            userPrefs.saveUser(usuario.email, usuario.nome, usuario.id)
+                            userPrefs.saveUser(usuarioEncontrado.email, usuarioEncontrado.nome, usuarioEncontrado.id)
+                            onSuccess()
                         }
-                        _uiState.value = _uiState.value.copy(loginSuccess = true)
                     } else {
-                        _uiState.value = _uiState.value.copy(errorMessage = "Login ou senha incorretos")
+                        _uiState.value = _uiState.value.copy(errorMessage = "Login e/ou senha incorretos")
                     }
                 } else {
                     _uiState.value = _uiState.value.copy(errorMessage = "Erro na resposta: ${response.code()}")
@@ -57,7 +58,7 @@ class LoginViewModel(private val context: Context) : ViewModel() {
             }
 
             override fun onFailure(call: Call<UserResponse>, t: Throwable) {
-                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = "Erro na conexão: ${t.message}")
+                _uiState.value = _uiState.value.copy(errorMessage = "Erro na conexão: ${t.message}", isLoading = false)
             }
         })
     }

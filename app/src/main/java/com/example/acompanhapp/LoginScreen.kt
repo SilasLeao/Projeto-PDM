@@ -1,4 +1,4 @@
-package com.example.acompanhapp
+package com.example.acompanhapp.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -6,42 +6,27 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.acompanhapp.api.RetrofitClient
-import com.example.acompanhapp.config.UserPreferences
-import com.example.acompanhapp.model.UserResponse
-import kotlinx.coroutines.launch
-import android.util.Base64
-import androidx.compose.runtime.collectAsState
+import com.example.acompanhapp.R
 import com.example.acompanhapp.viewmodel.LoginViewModel
-import org.mindrot.jbcrypt.BCrypt
-import androidx.compose.runtime.LaunchedEffect
-import com.example.acompanhapp.viewmodel.LoginViewModelFactory
+import org.koin.androidx.compose.koinViewModel
 
-
-// Composable que representa a tela de login do aplicativo.
 @Composable
-fun LoginScreen(
-    navController: NavController,
-    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = LoginViewModelFactory(LocalContext.current))
-) {
+fun LoginScreen(navController: NavController, viewModel: LoginViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -73,10 +58,16 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = uiState.email,
-                onValueChange = viewModel::onEmailChange,
+                onValueChange = { viewModel.onEmailChange(it) },
                 placeholder = { Text("email@exemplo.com", color = Color(0xFFA1A1A1)) },
-                modifier = Modifier.fillMaxWidth(0.8f),
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .clip(RoundedCornerShape(50.dp))
+                    .background(Color(0xFF146144)),
                 colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = Color.Transparent,
+                    cursorColor = Color.White,
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
                     focusedContainerColor = Color(0xFF146144),
@@ -88,11 +79,18 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = uiState.senha,
-                onValueChange = viewModel::onSenhaChange,
+                onValueChange = { viewModel.onSenhaChange(it) },
                 placeholder = { Text("*******", color = Color(0xFFA1A1A1)) },
                 visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth(0.8f),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .clip(RoundedCornerShape(50.dp))
+                    .background(Color(0xFF146144)),
                 colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = Color.Transparent,
+                    cursorColor = Color.White,
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
                     focusedContainerColor = Color(0xFF146144),
@@ -100,16 +98,19 @@ fun LoginScreen(
                 )
             )
 
-            uiState.errorMessage?.let { msg ->
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(msg, color = Color.Red)
-            }
+            Text("Esqueci minha senha",
+                modifier = Modifier.padding(top = 4.dp),
+                fontSize = MaterialTheme.typography.bodySmall.fontSize,
+                color = Color.White
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = viewModel::login,
-                modifier = Modifier.fillMaxWidth(0.8f)
+                onClick = { viewModel.login { navController.navigate("home") } },
+                modifier = Modifier.fillMaxWidth(0.8f),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color(0xFF146144)),
+                shape = RoundedCornerShape(50.dp)
             ) {
                 Text("Entrar")
             }
@@ -118,19 +119,11 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 CircularProgressIndicator()
             }
-        }
-    }
 
-    // Navegação em caso de login bem-sucedido
-    if (uiState.loginSuccess) {
-        LaunchedEffect(Unit) {
-            navController.navigate("home") {
-                popUpTo("login") { inclusive = true }
+            uiState.errorMessage?.let { error ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Toast.makeText(context, error, Toast.LENGTH_LONG).show()
             }
         }
     }
 }
-
-
-
-

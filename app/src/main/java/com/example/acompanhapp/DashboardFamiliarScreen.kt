@@ -18,14 +18,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.acompanhapp.viewmodel.DashboardViewModel
-import com.example.acompanhapp.viewmodel.DashboardViewModelFactory
 import com.example.acompanhapp.viewmodel.state.DashboardUiState
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun DashboardFamiliarScreen(
-    viewModel: DashboardViewModel = viewModel(factory = DashboardViewModelFactory(LocalContext.current))
+    viewModel: DashboardViewModel = koinViewModel()
 ) {
-    val uiState: DashboardUiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
 
     LaunchedEffect(Unit) {
