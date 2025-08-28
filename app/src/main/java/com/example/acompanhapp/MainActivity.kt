@@ -32,7 +32,7 @@ fun AppNavigation() {
     NavHost(navController = navController, startDestination = "login") {
         composable("login") { LoginScreen(navController) }
         composable("home") { HomeScreen(navController) }
-        composable("dashboard") { DashboardFamiliarScreen(navController) }
-        composable("equipe") { EquipeMedicaScreen(navController) }
+        composable("dashboard") { DashboardFamiliarScreen() }
+        composable("equipe") { EquipeMedicaScreen() }
     }
 }

@@ -39,31 +39,9 @@ import com.example.acompanhapp.viewmodel.LoginViewModelFactory
 @Composable
 fun LoginScreen(
     navController: NavController,
-    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-        factory = LoginViewModelFactory(LocalContext.current)
-    )
+    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = LoginViewModelFactory(LocalContext.current))
 ) {
-    val email by viewModel.email.collectAsState()
-    val senha by viewModel.senha.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val loginSuccess by viewModel.loginSuccess.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
-
-    val context = LocalContext.current
-
-    val coroutineScope = rememberCoroutineScope() // ainda pode usar se quiser
-
-    // Navegação após login
-    LaunchedEffect(loginSuccess) {
-        if (loginSuccess) navController.navigate("home")
-    }
-
-    // Mostrar toast de erro
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let {
-            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
-        }
-    }
+    val uiState by viewModel.uiState.collectAsState()
 
     Column(
         modifier = Modifier
@@ -89,27 +67,16 @@ fun LoginScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                "Fazer Login",
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color.White
-            )
+            Text("Fazer Login", style = MaterialTheme.typography.headlineSmall, color = Color.White)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Email
             OutlinedTextField(
-                value = email,
-                onValueChange = { viewModel.onEmailChange(it) },
+                value = uiState.email,
+                onValueChange = viewModel::onEmailChange,
                 placeholder = { Text("email@exemplo.com", color = Color(0xFFA1A1A1)) },
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .clip(RoundedCornerShape(50.dp))
-                    .background(Color(0xFF146144)),
+                modifier = Modifier.fillMaxWidth(0.8f),
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color.Transparent,
-                    focusedBorderColor = Color.Transparent,
-                    cursorColor = Color.White,
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
                     focusedContainerColor = Color(0xFF146144),
@@ -119,21 +86,13 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Senha
             OutlinedTextField(
-                value = senha,
-                onValueChange = { viewModel.onSenhaChange(it) },
+                value = uiState.senha,
+                onValueChange = viewModel::onSenhaChange,
                 placeholder = { Text("*******", color = Color(0xFFA1A1A1)) },
                 visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .clip(RoundedCornerShape(50.dp))
-                    .background(Color(0xFF146144)),
+                modifier = Modifier.fillMaxWidth(0.8f),
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color.Transparent,
-                    focusedBorderColor = Color.Transparent,
-                    cursorColor = Color.White,
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
                     focusedContainerColor = Color(0xFF146144),
@@ -141,35 +100,37 @@ fun LoginScreen(
                 )
             )
 
-            Text(
-                "Esqueci minha senha",
-                modifier = Modifier.padding(top = 4.dp),
-                fontSize = MaterialTheme.typography.bodySmall.fontSize,
-                color = Color.White
-            )
+            uiState.errorMessage?.let { msg ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(msg, color = Color.Red)
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botão de login
             Button(
-                onClick = { viewModel.login() },
-                modifier = Modifier.fillMaxWidth(0.8f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = Color(0xFF146144)
-                ),
-                shape = RoundedCornerShape(50.dp)
+                onClick = viewModel::login,
+                modifier = Modifier.fillMaxWidth(0.8f)
             ) {
                 Text("Entrar")
             }
 
-            if (isLoading) {
+            if (uiState.isLoading) {
                 Spacer(modifier = Modifier.height(16.dp))
                 CircularProgressIndicator()
             }
         }
     }
+
+    // Navegação em caso de login bem-sucedido
+    if (uiState.loginSuccess) {
+        LaunchedEffect(Unit) {
+            navController.navigate("home") {
+                popUpTo("login") { inclusive = true }
+            }
+        }
+    }
 }
+
 
 
 

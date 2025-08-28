@@ -1,115 +1,131 @@
 package com.example.acompanhapp
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
-import com.example.acompanhapp.api.RetrofitClient
-import com.example.acompanhapp.config.UserPreferences
-import com.example.acompanhapp.model.PacienteResponse
-import retrofit2.Call
-import retrofit2.Response
-import retrofit2.Callback
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import com.example.acompanhapp.model.Paciente
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.acompanhapp.viewmodel.DashboardViewModel
 import com.example.acompanhapp.viewmodel.DashboardViewModelFactory
+import com.example.acompanhapp.viewmodel.state.DashboardUiState
 
-// Tela principal do dashboard para usuários familiares, mostrando os pacientes ligados ao usuário.
 @Composable
 fun DashboardFamiliarScreen(
-    navController: NavController,
-    viewModel: DashboardViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = DashboardViewModelFactory(
-        LocalContext.current
-    )
-    )
+    viewModel: DashboardViewModel = viewModel(factory = DashboardViewModelFactory(LocalContext.current))
 ) {
-    val nomeUsuario by viewModel.nomeUsuario.collectAsState()
-    val pacientesFiltrados by viewModel.pacientesFiltrados.collectAsState()
+    val uiState: DashboardUiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadPacientes()
+    }
 
     Column(
         modifier = Modifier
             .padding(16.dp)
             .verticalScroll(scrollState)
     ) {
-
         Text(
-            text = "Olá " + (nomeUsuario ?: "Familiar"),
+            text = "Olá ${uiState.nomeUsuario ?: "Familiar"}",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(top = 16.dp)
         )
 
         Divider(modifier = Modifier.padding(vertical = 12.dp))
 
-        pacientesFiltrados.forEach { paciente ->
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFFE2EBE6))
-                    .padding(12.dp)
-            ) {
-                Text("Paciente: ${paciente.nome ?: "Carregando..."}", fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    CardInfo("Condição:", paciente.status ?: "Carregando...", Modifier.weight(1f))
-                    CardInfo("Batimentos:", "100 bpm", Modifier.weight(1f))
-                    CardInfo("Pressão:", "180/90", Modifier.weight(1f))
+        if (uiState.isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+        } else {
+            if (uiState.pacientes.isEmpty()) {
+                Text("Nenhum paciente encontrado.", modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else {
+                uiState.pacientes.forEach { paciente ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0xFFE2EBE6))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = "Paciente: ${paciente.nome ?: "Carregando..."}",
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            CardInfo(
+                                title = "Condição:",
+                                value = paciente.status ?: "Carregando...",
+                                modifier = Modifier.weight(1f)
+                            )
+                            CardInfo(title = "Batimentos:", value = "100 bpm", modifier = Modifier.weight(1f))
+                            CardInfo(title = "Pressão:", value = "180/90", modifier = Modifier.weight(1f))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0xFFE2EBE6))
+                            .padding(12.dp)
+                    ) {
+                        Text("Observações", fontWeight = FontWeight.Bold)
+                        Text(
+                            paciente.observacoes ?: "Carregando observações...",
+                            fontStyle = FontStyle.Italic
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        ActionButton("Exames", Modifier.weight(1f))
+                        ActionButton("Visitas", Modifier.weight(1f))
+                        ActionButton("Medicamentos", Modifier.weight(1f))
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0xFFE2EBE6))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            "Hospital Central\nAv. Brasil, 1234 - Centro\nTel: (11) 1234-5678"
+                        )
+                    }
+
+                    Divider(modifier = Modifier.padding(vertical = 32.dp))
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFFE2EBE6))
-                    .padding(12.dp)
-            ) {
-                Text("Observações", fontWeight = FontWeight.Bold)
-                Text(paciente.observacoes ?: "Carregando observações...", fontStyle = FontStyle.Italic)
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                ActionButton("Exames", Modifier.weight(1f))
-                ActionButton("Visitas", Modifier.weight(1f))
-                ActionButton("Medicamentos", Modifier.weight(1f))
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFFE2EBE6))
-                    .padding(12.dp)
-            ) {
-                Text(
-                    "Hospital Central\nAv. Brasil, 1234 - Centro\nTel: (11) 1234-5678"
-                )
-            }
-
-            Divider(modifier = Modifier.padding(vertical = 32.dp))
+            uiState.errorMessage?.let { Text(it, color = Color.Red) }
         }
     }
 }
+
 
 
 // Composable que exibe um card para Condição, Batimentos e Pressão.

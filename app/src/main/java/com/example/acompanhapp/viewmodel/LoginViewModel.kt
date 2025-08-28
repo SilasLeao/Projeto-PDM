@@ -1,11 +1,13 @@
 package com.example.acompanhapp.viewmodel
 
 import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.acompanhapp.api.RetrofitClient
 import com.example.acompanhapp.config.UserPreferences
 import com.example.acompanhapp.model.UserResponse
+import com.example.acompanhapp.viewmodel.state.LoginUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -16,63 +18,46 @@ import retrofit2.Response
 
 class LoginViewModel(private val context: Context) : ViewModel() {
 
+    private val _uiState = MutableStateFlow(LoginUiState())
+    val uiState: StateFlow<LoginUiState> = _uiState
+
     private val userPrefs = UserPreferences(context)
 
-    // Estados do Login
-    private val _email = MutableStateFlow("")
-    val email: StateFlow<String> = _email
-
-    private val _senha = MutableStateFlow("")
-    val senha: StateFlow<String> = _senha
-
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
-
-    private val _loginSuccess = MutableStateFlow(false)
-    val loginSuccess: StateFlow<Boolean> = _loginSuccess
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
-
-    fun onEmailChange(newEmail: String) {
-        _email.value = newEmail
+    fun onEmailChange(email: String) {
+        _uiState.value = _uiState.value.copy(email = email)
     }
 
-    fun onSenhaChange(newSenha: String) {
-        _senha.value = newSenha
+    fun onSenhaChange(senha: String) {
+        _uiState.value = _uiState.value.copy(senha = senha)
     }
 
     fun login() {
-        _isLoading.value = true
+        val email = _uiState.value.email
+        val senha = _uiState.value.senha
+
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+
         RetrofitClient.getClient().getUsers().enqueue(object : Callback<UserResponse> {
             override fun onResponse(call: Call<UserResponse>, response: Response<UserResponse>) {
-                _isLoading.value = false
+                _uiState.value = _uiState.value.copy(isLoading = false)
                 if (response.isSuccessful) {
-                    val usuarios = response.body()?.data ?: emptyList()
-                    val usuarioEncontrado = usuarios.find { it.email == _email.value }
-
-                    if (usuarioEncontrado != null &&
-                        BCrypt.checkpw(_senha.value, usuarioEncontrado.password)) {
-
+                    val usuario = response.body()?.data?.find { it.email == email }
+                    if (usuario != null && BCrypt.checkpw(senha, usuario.password)) {
+                        // Login correto
                         viewModelScope.launch {
-                            userPrefs.saveUser(
-                                email = usuarioEncontrado.email,
-                                name = usuarioEncontrado.nome,
-                                id = usuarioEncontrado.id
-                            )
+                            userPrefs.saveUser(usuario.email, usuario.nome, usuario.id)
                         }
-                        _loginSuccess.value = true
+                        _uiState.value = _uiState.value.copy(loginSuccess = true)
                     } else {
-                        _errorMessage.value = "Login e/ou senha incorretos"
+                        _uiState.value = _uiState.value.copy(errorMessage = "Login ou senha incorretos")
                     }
                 } else {
-                    _errorMessage.value = "Erro na resposta: ${response.code()}"
+                    _uiState.value = _uiState.value.copy(errorMessage = "Erro na resposta: ${response.code()}")
                 }
             }
 
             override fun onFailure(call: Call<UserResponse>, t: Throwable) {
-                _isLoading.value = false
-                _errorMessage.value = "Erro na conexão: ${t.message}"
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = "Erro na conexão: ${t.message}")
             }
         })
     }
