@@ -23,44 +23,25 @@ import retrofit2.Callback
 import retrofit2.Response
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.example.acompanhapp.viewmodel.EquipeMedicaViewModel
+import com.example.acompanhapp.viewmodel.EquipeMedicaViewModelFactory
 
 
 // Composable que exibe a tela da equipe médica, fazendo uma requisição para buscar a lista de médicos cadastrados
 @Composable
-fun EquipeMedicaScreen(navController: NavController) {
-    // Estado para armazenar a lista de médicos retornada pela API
-    var medicos by remember { mutableStateOf<List<Medico>>(emptyList()) }
-    // Estado para controlar se os dados estão sendo carregados
-    var isLoading by remember { mutableStateOf(true) }
-    // Contexto para exibir Toasts
-    val context = LocalContext.current
-    // Estado para rolagem vertical da tela
+fun EquipeMedicaScreen(
+    navController: NavController,
+    viewModel: EquipeMedicaViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = EquipeMedicaViewModelFactory(
+        LocalContext.current
+    )
+    )
+) {
+    val medicos by viewModel.medicos.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     val scrollState = rememberScrollState()
-
-    // Efeito executado ao iniciar a composição para carregar dados da API
-    LaunchedEffect(Unit) {
-        RetrofitClient.getClient().getEquipeMedica().enqueue(object : Callback<EquipeMedicaResponse> {
-            // Callback executado quando a resposta da API é recebida
-            override fun onResponse(call: Call<EquipeMedicaResponse>, response: Response<EquipeMedicaResponse>) {
-                isLoading = false
-                if (response.isSuccessful) {
-                    // Atualiza a lista de médicos com os dados da resposta
-                    medicos = response.body()?.data ?: emptyList()
-                } else {
-                    // Mostra mensagem de erro em caso de falha na resposta
-                    Toast.makeText(context, "Erro na resposta: ${response.code()}", Toast.LENGTH_LONG).show()
-                }
-            }
-
-            // Callback executado caso a requisição falhe
-            override fun onFailure(call: Call<EquipeMedicaResponse>, t: Throwable) {
-                isLoading = false
-                Toast.makeText(context, "Erro na conexão: ${t.message}", Toast.LENGTH_LONG).show()
-            }
-        })
-    }
 
     Column(
         modifier = Modifier
@@ -69,17 +50,14 @@ fun EquipeMedicaScreen(navController: NavController) {
             .verticalScroll(scrollState)
     ) {
         Text("Equipe Médica", style = MaterialTheme.typography.headlineSmall)
-
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Se estiver carregando, mostra indicador de progresso circular
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
             if (medicos.isEmpty()) {
                 Text("Nenhum médico cadastrado.", modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
-                // Para cada médico, cria um Card com as informações dele
                 medicos.forEach { medico ->
                     Card(
                         modifier = Modifier
@@ -96,7 +74,12 @@ fun EquipeMedicaScreen(navController: NavController) {
                             )
                             Text(medico.cargo, color = Color.White)
                             Text(medico.setor, color = Color.White)
-                            Text(medico.email, color = Color.White, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
+                            Text(
+                                medico.email,
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
                         }
                     }
                 }
@@ -104,3 +87,4 @@ fun EquipeMedicaScreen(navController: NavController) {
         }
     }
 }
+

@@ -24,50 +24,26 @@ import retrofit2.Callback
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import com.example.acompanhapp.model.Paciente
+import com.example.acompanhapp.viewmodel.DashboardViewModel
+import com.example.acompanhapp.viewmodel.DashboardViewModelFactory
 
 // Tela principal do dashboard para usuários familiares, mostrando os pacientes ligados ao usuário.
 @Composable
-fun DashboardFamiliarScreen(navController: NavController) {
-    val context = LocalContext.current
-    val userPreferences = remember { UserPreferences(context) }
-
-    // Estados para armazenar informações do Usuário e Paciente
-    var nomeUsuario by remember { mutableStateOf<String?>(null) }
-    var idUsuario by remember { mutableStateOf<String?>(null) }
-    var pacientesFiltrados by remember { mutableStateOf<List<Paciente>>(emptyList()) }
-
-    // Efeito executado ao iniciar a composição para carregar dados da API
-    LaunchedEffect(Unit) {
-        nomeUsuario = userPreferences.getName()
-        idUsuario = userPreferences.getId()
-
-        // Caso o id do usuário familiar não seja nulo, executa a busca dos pacientes
-        idUsuario?.let { id ->
-            RetrofitClient.getClient().getPacientes().enqueue(object : Callback<PacienteResponse> {
-                // Callback executado quando a resposta da API é recebida
-                override fun onResponse(call: Call<PacienteResponse>, response: Response<PacienteResponse>) {
-                    if (response.isSuccessful) {
-                        // Obtém a lista completa de pacientes da resposta ou uma lista vazia caso não tenha dados
-                        val todosPacientes = response.body()?.data ?: emptyList()
-                        // Filtra pacientes que contenham o id do familiar na lista de familiaresId
-                        val filtrados = todosPacientes.filter { it.familiaresId?.contains(id) == true }
-                        pacientesFiltrados = filtrados
-
-                    }
-                }
-
-                override fun onFailure(call: Call<PacienteResponse>, t: Throwable) {
-                    Log.e("Dashboard", "Erro ao buscar pacientes: ${t.message}")
-                }
-            })
-        }
-    }
-
+fun DashboardFamiliarScreen(
+    navController: NavController,
+    viewModel: DashboardViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = DashboardViewModelFactory(
+        LocalContext.current
+    )
+    )
+) {
+    val nomeUsuario by viewModel.nomeUsuario.collectAsState()
+    val pacientesFiltrados by viewModel.pacientesFiltrados.collectAsState()
+    val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
             .padding(16.dp)
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
     ) {
 
         Text(
@@ -78,9 +54,7 @@ fun DashboardFamiliarScreen(navController: NavController) {
 
         Divider(modifier = Modifier.padding(vertical = 12.dp))
 
-        // Renderiza um bloco para cada paciente filtrado
         pacientesFiltrados.forEach { paciente ->
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -88,21 +62,12 @@ fun DashboardFamiliarScreen(navController: NavController) {
                     .background(Color(0xFFE2EBE6))
                     .padding(12.dp)
             ) {
-                Text(
-                    text = "Paciente: ${paciente.nome ?: "Carregando..."}",
-                    fontWeight = FontWeight.Bold
-                )
-
+                Text("Paciente: ${paciente.nome ?: "Carregando..."}", fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
-
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    CardInfo(
-                        title = "Condição:",
-                        value = paciente.status ?: "Carregando...",
-                        modifier = Modifier.weight(1f)
-                    )
-                    CardInfo(title = "Batimentos:", value = "100 bpm", modifier = Modifier.weight(1f))
-                    CardInfo(title = "Pressão:", value = "180/90", modifier = Modifier.weight(1f))
+                    CardInfo("Condição:", paciente.status ?: "Carregando...", Modifier.weight(1f))
+                    CardInfo("Batimentos:", "100 bpm", Modifier.weight(1f))
+                    CardInfo("Pressão:", "180/90", Modifier.weight(1f))
                 }
             }
 
@@ -116,18 +81,12 @@ fun DashboardFamiliarScreen(navController: NavController) {
                     .padding(12.dp)
             ) {
                 Text("Observações", fontWeight = FontWeight.Bold)
-                Text(
-                    paciente.observacoes ?: "Carregando observações...",
-                    fontStyle = FontStyle.Italic
-                )
+                Text(paciente.observacoes ?: "Carregando observações...", fontStyle = FontStyle.Italic)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 ActionButton("Exames", Modifier.weight(1f))
                 ActionButton("Visitas", Modifier.weight(1f))
                 ActionButton("Medicamentos", Modifier.weight(1f))
@@ -150,9 +109,8 @@ fun DashboardFamiliarScreen(navController: NavController) {
             Divider(modifier = Modifier.padding(vertical = 32.dp))
         }
     }
-
-
 }
+
 
 // Composable que exibe um card para Condição, Batimentos e Pressão.
 @Composable

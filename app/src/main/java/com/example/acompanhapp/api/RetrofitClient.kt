@@ -6,7 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 // Cliente Retrofit para realizar chamadas HTTP à API, incluindo o interceptor de autenticação
 object RetrofitClient {
-    private const val BASE_URL = "http://52.15.153.93:8080/"
+    private const val BASE_URL = "http://3.142.172.75:8080/"
 
     fun getClient(): UserApi {
         val okHttpClient = OkHttpClient.Builder()

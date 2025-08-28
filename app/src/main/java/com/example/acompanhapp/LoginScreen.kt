@@ -27,18 +27,43 @@ import com.example.acompanhapp.api.RetrofitClient
 import com.example.acompanhapp.config.UserPreferences
 import com.example.acompanhapp.model.UserResponse
 import kotlinx.coroutines.launch
+import android.util.Base64
+import androidx.compose.runtime.collectAsState
+import com.example.acompanhapp.viewmodel.LoginViewModel
+import org.mindrot.jbcrypt.BCrypt
+import androidx.compose.runtime.LaunchedEffect
+import com.example.acompanhapp.viewmodel.LoginViewModelFactory
+
 
 // Composable que representa a tela de login do aplicativo.
 @Composable
-fun LoginScreen(navController: NavController) {
-    // Estados para armazenar email, senha e status de carregamento
-    var email by remember { mutableStateOf("") }
-    var senha by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
+fun LoginScreen(
+    navController: NavController,
+    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = LoginViewModelFactory(LocalContext.current)
+    )
+) {
+    val email by viewModel.email.collectAsState()
+    val senha by viewModel.senha.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val loginSuccess by viewModel.loginSuccess.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val userPrefs = remember { UserPreferences(context) }
+
+    val coroutineScope = rememberCoroutineScope() // ainda pode usar se quiser
+
+    // Navegação após login
+    LaunchedEffect(loginSuccess) {
+        if (loginSuccess) navController.navigate("home")
+    }
+
+    // Mostrar toast de erro
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -64,19 +89,19 @@ fun LoginScreen(navController: NavController) {
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Fazer Login", style = MaterialTheme.typography.headlineSmall, color = Color.White)
+            Text(
+                "Fazer Login",
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color.White
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Email
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
-                placeholder = {
-                    Text(
-                        "email@exemplo.com",
-                        color = Color(0xFFA1A1A1)
-                    )
-                },
+                onValueChange = { viewModel.onEmailChange(it) },
+                placeholder = { Text("email@exemplo.com", color = Color(0xFFA1A1A1)) },
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
                     .clip(RoundedCornerShape(50.dp))
@@ -94,15 +119,11 @@ fun LoginScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Senha
             OutlinedTextField(
                 value = senha,
-                onValueChange = { senha = it },
-                placeholder = {
-                    Text(
-                        "*******",
-                        color = Color(0xFFA1A1A1)
-                    )
-                },
+                onValueChange = { viewModel.onSenhaChange(it) },
+                placeholder = { Text("*******", color = Color(0xFFA1A1A1)) },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier
@@ -122,56 +143,16 @@ fun LoginScreen(navController: NavController) {
 
             Text(
                 "Esqueci minha senha",
-                modifier = Modifier
-                    .padding(top = 4.dp),
+                modifier = Modifier.padding(top = 4.dp),
                 fontSize = MaterialTheme.typography.bodySmall.fontSize,
                 color = Color.White
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botão para tentar efetuar login
+            // Botão de login
             Button(
-                onClick = {
-                    isLoading = true
-                    // Realiza requisição para obter lista de usuários e validar credenciais
-                    RetrofitClient.getClient().getUsers().enqueue(object : retrofit2.Callback<UserResponse> {
-                        override fun onResponse(
-                            call: retrofit2.Call<UserResponse>,
-                            response: retrofit2.Response<UserResponse>
-                        ) {
-                            isLoading = false
-                            if (response.isSuccessful) {
-                                val usuarios = response.body()?.data ?: emptyList()
-                                // Procura usuário com as credenciais usadas no login
-                                val usuarioEncontrado = usuarios.find {
-                                    it.email == email && it.password == senha
-                                }
-                                if (usuarioEncontrado != null) {
-                                    // Salva dados do usuário na DataStore
-                                    coroutineScope.launch {
-                                        userPrefs.saveUser(
-                                            email = usuarioEncontrado.email,
-                                            name = usuarioEncontrado.nome,
-                                            id = usuarioEncontrado.id
-                                        )
-                                    }
-                                    // Navega para a tela principal após login bem sucedido
-                                    navController.navigate("home")
-                                } else {
-                                    Toast.makeText(context, "Email ou senha incorretos", Toast.LENGTH_SHORT).show()
-                                }
-                            } else {
-                                Toast.makeText(context, "Erro na resposta: ${response.code()}", Toast.LENGTH_LONG).show()
-                            }
-                        }
-
-                        override fun onFailure(call: retrofit2.Call<UserResponse>, t: Throwable) {
-                            isLoading = false
-                            Toast.makeText(context, "Erro na conexão: ${t.message}", Toast.LENGTH_LONG).show()
-                        }
-                    })
-                },
+                onClick = { viewModel.login() },
                 modifier = Modifier.fillMaxWidth(0.8f),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White,
@@ -187,7 +168,8 @@ fun LoginScreen(navController: NavController) {
                 CircularProgressIndicator()
             }
         }
-
     }
 }
+
+
 
